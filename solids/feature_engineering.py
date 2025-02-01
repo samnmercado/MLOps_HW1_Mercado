@@ -1,17 +1,22 @@
 from solids.imports import *
 
-# Function to label the spread differences
-def label_spread(x):
-    if x > 0.1:
-        return 'divergence'  # Spread increased by more than 0.1
-    elif x < -0.1:
-        return 'convergence'  # Spread decreased by more than -0.1
-    else:
-        return 'steady'  # Spread change is within a smaller range
-
 # Feature Engineering Function
-@solid
+@op(
+    out={
+        "spread_data": Out(),
+        "features": Out(),
+    }
+)
 def create_spreads_and_more(df):
+    # Function to label the spread differences inside the main function
+    def label_spread(x):
+        if x > 0.1:
+            return 'divergence'  # Spread increased by more than 0.1
+        elif x < -0.1:
+            return 'convergence'  # Spread decreased by more than -0.1
+        else:
+            return 'steady'  # Spread change is within a smaller range
+
     # Standardize the numerical data
     numeric_data = df.select_dtypes(include=[float, int])
     scaler = StandardScaler()

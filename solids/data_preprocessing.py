@@ -1,6 +1,6 @@
 from solids.imports import *
 
-@solid
+@op
 def read_and_clean_data(file_path='../data/30_yr_stock_market_data.csv'):
 
     # Read the CSV data
