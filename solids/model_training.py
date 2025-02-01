@@ -1,11 +1,4 @@
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import train_test_split
+from solids.imports import *
 
 Number_trials = 3
 

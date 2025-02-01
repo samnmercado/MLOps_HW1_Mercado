@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import warnings
-warnings.filterwarnings("ignore")
 
 from scipy import stats
 from collections import Counter

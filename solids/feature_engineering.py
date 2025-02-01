@@ -1,5 +1,4 @@
-import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from solids.imports import *
 
 # Function to label the spread differences
 def label_spread(x):
@@ -11,12 +10,20 @@ def label_spread(x):
         return 'steady'  # Spread change is within a smaller range
 
 # Feature Engineering Function
+@solid
 def create_spreads_and_more(df):
     # Standardize the numerical data
     numeric_data = df.select_dtypes(include=[float, int])
     scaler = StandardScaler()
     df_scaled = pd.DataFrame(scaler.fit_transform(numeric_data), columns=numeric_data.columns, index=df.index)
 
+    # Drop redundant independent variables
+    df_scaled = df_scaled.drop(
+        ['Dow Jones (^DJI)', 'Nasdaq (^IXIC)', 'NYSE Composite (^NYA)', 'Russell 2000 (^RUT)',
+         'Treasury Yield 5 Years (^FVX)', 'Treasury Bill 13 Week (^IRX)', 'Treasury Yield 30 Years (^TYX)'],
+        axis=1
+    )
+    
     # Calculate the spread between each index and the Treasury Yield 10 Years (^TNX)
     spread_data = pd.DataFrame(index=df_scaled.index)
     
@@ -43,8 +50,11 @@ def create_spreads_and_more(df):
     # Apply the label_spread function to the differences
     df_labels = df_diff.applymap(label_spread)
 
-    # Display the shape and the first few rows of the label data
-    display(df_labels.shape)
-    display(df_labels.head())
+    # Drop the first row
+    df_labels_mapped = df_labels.iloc[1:]
 
-    return spread_data, df_labels
+    # Apply the mapping to convert labels from text to numbers
+    mapping = {'divergence': 1, 'convergence': -1, 'steady': 0}
+    df_labels_mapped = df_labels.applymap(lambda x: mapping.get(x, x))
+
+    return spread_data, df_labels_mapped
