@@ -1,0 +1,83 @@
+services:
+  db:
+    image: postgres:${PG_VERSION}
+    container_name: mlflow_postgres
+    restart: always
+    expose:
+      - "${PG_PORT}"
+    networks:
+      - backend-network
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+      - POSTGRES_DB=${PG_DATABASE}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD", "pg_isready", "-p", "${PG_PORT}", "-U", "${PG_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  s3:
+    image: minio/minio:${MINIO_VERSION}
+    container_name: mlflow_minio
+    restart: always
+    volumes:
+      - ./minio_data:/data
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    networks:
+      - frontend-network
+      - backend-network
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_ADDRESS=${MINIO_ADDRESS}
+      - MINIO_PORT=${MINIO_PORT}
+      - MINIO_STORAGE_USE_HTTPS=${MINIO_STORAGE_USE_HTTPS}
+      - MINIO_CONSOLE_ADDRESS=${MINIO_CONSOLE_ADDRESS}
+    command: server /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  tracking_server:
+    build: ./mlflow
+    image: mlflow_server
+    container_name: mlflow_server
+    restart: always
+    depends_on:
+      - db
+      - s3
+    ports:
+      - "5001:5000"  # Expose port 5001 on the host, mapping to port 5000 in the container
+    networks:
+      - frontend-network
+      - backend-network
+    environment:
+      - AWS_ACCESS_KEY_ID=${MINIO_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_ACCESS_KEY}
+      - MLFLOW_S3_ENDPOINT_URL=http://s3:${MINIO_PORT}
+      - MLFLOW_S3_IGNORE_TLS=true
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://${PG_USER}:${PG_PASSWORD}@db:${PG_PORT}/${PG_DATABASE}
+      --host 0.0.0.0
+      --serve-artifacts
+      --artifacts-destination s3://${MLFLOW_BUCKET_NAME}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  frontend-network:
+    driver: bridge
+  backend-network:
+    driver: bridge
+    
