@@ -8,6 +8,9 @@ from solids.data_preprocessing import read_and_clean_data
 from solids.feature_engineering import create_spreads_and_more
 from solids.model_training import train_kNN, train_GBM, train_RF
 
+# Set MLflow tracking URI
+mlflow.set_tracking_uri("http://localhost:5001")
+
 # Wrapper class for MLflow models
 class MLflowModelWrapper(mlflow.pyfunc.PythonModel):
     def __init__(self, model):
@@ -45,24 +48,12 @@ def stock_data_pipeline():
         # Log and pass the engineered features to model training
         logging.info("Running model training for kNN.")
         trained_kNN = train_kNN(features)
-        wrapped_kNN = MLflowModelWrapper(trained_kNN)
-        logging.info("Logging trained kNN model to MLflow.")
-        with mlflow.start_run():
-            mlflow.pyfunc.log_model("kNN_model", python_model=wrapped_kNN)
 
         logging.info("Running model training for GBM.")
         trained_GBM = train_GBM(features)
-        wrapped_GBM = MLflowModelWrapper(trained_GBM)
-        logging.info("Logging trained GBM model to MLflow.")
-        with mlflow.start_run():
-            mlflow.pyfunc.log_model("GBM_model", python_model=wrapped_GBM)
 
         logging.info("Running model training for RF.")
         trained_RF = train_RF(features)
-        wrapped_RF = MLflowModelWrapper(trained_RF)
-        logging.info("Logging trained RF model to MLflow.")
-        with mlflow.start_run():
-            mlflow.pyfunc.log_model("RF_model", python_model=wrapped_RF)
     
     except Exception as e:
         logging.error(f"An error occurred: {e}")
