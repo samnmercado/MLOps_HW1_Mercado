@@ -1,0 +1,6 @@
+ops:
+  read_and_clean_data: {}
+  create_spreads_and_more: {}
+  train_kNN: {}
+  train_GBM: {}
+  train_RF: {}
