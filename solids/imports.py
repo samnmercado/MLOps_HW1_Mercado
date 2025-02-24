@@ -30,3 +30,6 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer, r2_score
 from sklearn.model_selection import KFold
+
+import mlflow
+import mlflow.pyfunc
