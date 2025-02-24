@@ -14,11 +14,11 @@ def create_spreads_and_more(df):
     # Function to label the spread differences inside the main function
     def label_spread(x):
         if x > 0.1:
-            return 'divergence'  # Spread increased by more than 0.1
+            return 1  # Spread increased by more than 0.1
         elif x < -0.1:
-            return 'convergence'  # Spread decreased by more than -0.1
+            return -1 # Spread decreased by more than -0.1
         else:
-            return 'steady'  # Spread change is within a smaller range
+            return 0  # Spread change is within a smaller range
 
     # Drop redundant independent variables
     df = df.drop(
@@ -65,4 +65,10 @@ def create_spreads_and_more(df):
     # Label the spread differences
     df_diff['spread_label'] = df_diff.apply(lambda row: label_spread(row.mean()), axis=1)
 
-    return df_diff, df_scaled
+    # Define X to include all columns except 'Spread_Natural Gas (NG=F)_TNX'
+    X = df_diff.drop('Spread_Natural Gas (NG=F)_TNX', axis=1)
+
+    # Define y to be the column 'Spread_Natural Gas (NG=F)_TNX'
+    y = df_diff['Spread_Natural Gas (NG=F)_TNX']
+
+    return X, y
