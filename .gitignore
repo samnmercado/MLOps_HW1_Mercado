@@ -143,3 +143,4 @@ minio_data/
 
 # Dagster data
 dagster_env/
+dagster-env/bin/pyrsa-encrypt
