@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import mlflow
 import mlflow.pyfunc
-from dagster import repository, job
+from dagster import repository, job, op, graph
 from solids.data_preprocessing import read_and_clean_data
 from solids.feature_engineering import create_spreads_and_more
 from solids.model_training import train_kNN, train_GBM, train_RF
@@ -33,35 +33,18 @@ logging.basicConfig(
 logging.debug("Repository initialized.")
 
 # Define the pipeline 
-@job
+@graph
 def stock_data_pipeline():
-    logging.info("Starting the stock data pipeline execution.")
-    try:
-        # Log and run the data preprocessing step
-        logging.info("Running data preprocessing.")    
-        raw_data = read_and_clean_data()
-    
-        # Log and pass the raw_data output from data preprocessing to feature engineering
-        logging.info("Running feature engineering.")
-        spread_data, features = create_spreads_and_more(raw_data)
+    raw_data = read_and_clean_data()
+    X, y = create_spreads_and_more(raw_data)
+    train_kNN(X, y)
+    train_GBM(X, y)
+    train_RF(X, y)
 
-        # Log and pass the engineered features to model training
-        logging.info("Running model training for kNN.")
-        trained_kNN = train_kNN(features)
-
-        logging.info("Running model training for GBM.")
-        trained_GBM = train_GBM(features)
-
-        logging.info("Running model training for RF.")
-        trained_RF = train_RF(features)
-    
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        raise  # Re-raise the exception after logging
-
-    logging.info("Pipeline execution finished.")
+# Define the job
+stock_data_pipeline_job = stock_data_pipeline.to_job(name="stock_data_pipeline_job")
 
 # Define the repository
 @repository
 def my_repository():
-    return [stock_data_pipeline]
+    return [stock_data_pipeline_job]
